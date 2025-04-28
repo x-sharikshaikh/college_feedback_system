@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - College Feedback System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2>Welcome, {{ user.get_full_name }}!</h2>
+                <p class="lead">
+                    This is your admin dashboard where you can manage feedback submissions assigned to you.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ pending_count }}</h1>
+                <p class="lead">Pending Feedbacks</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ resolved_count }}</h1>
+                <p class="lead">Resolved Feedbacks</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Assigned Feedback Submissions</h4>
+                <a href="{% url 'list_feedbacks' %}" class="btn btn-light btn-sm">View All</a>
+            </div>
+            <div class="card-body">
+                {% if feedbacks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Student</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feedback in feedbacks|slice:":10" %}
+                            <tr>
+                                <td>{{ feedback.title }}</td>
+                                <td>{{ feedback.student.get_full_name }}</td>
+                                <td>
+                                    {% if feedback.category == 'academic' %}
+                                    <span class="badge bg-primary">Academic</span>
+                                    {% elif feedback.category == 'infrastructure' %}
+                                    <span class="badge bg-success">Infrastructure</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Administrative</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if feedback.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Resolved</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ feedback.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'view_feedback' feedback.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    {% if feedback.status == 'pending' %}
+                                    <a href="{% url 'resolve_feedback' feedback.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Resolve
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No feedback submissions assigned to you yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

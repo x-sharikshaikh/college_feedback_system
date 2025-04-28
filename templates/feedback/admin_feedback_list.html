@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Feedbacks - College Feedback System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    {% if user.user_type == 'academic_admin' %}
+                    Academic Feedback Management
+                    {% elif user.user_type == 'infrastructure_admin' %}
+                    Infrastructure Feedback Management
+                    {% elif user.user_type == 'administrative_admin' %}
+                    Administrative Feedback Management
+                    {% else %}
+                    All Feedback Management
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Filter Controls -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="btn-group" role="group">
+                            <a href="?status=all" class="btn btn-outline-secondary">All</a>
+                            <a href="?status=pending" class="btn btn-outline-warning">Pending</a>
+                            <a href="?status=resolved" class="btn btn-outline-success">Resolved</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <form class="d-flex">
+                            <input class="form-control me-2" type="search" placeholder="Search by title or description" aria-label="Search" name="search">
+                            <button class="btn btn-outline-primary" type="submit">Search</button>
+                        </form>
+                    </div>
+                </div>
+                
+                {% if feedbacks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Student</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Submitted On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feedback in feedbacks %}
+                            <tr>
+                                <td>{{ feedback.title }}</td>
+                                <td>{{ feedback.student.username }}</td>
+                                <td>
+                                    <span class="badge badge-{{ feedback.category }}">
+                                        {{ feedback.get_category_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ feedback.status }}">
+                                        {{ feedback.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ feedback.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'view_feedback' feedback.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    {% if feedback.status == 'pending' %}
+                                    <a href="{% url 'resolve_feedback' feedback.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Resolve
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No feedback submissions found.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Feedback Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ feedbacks.count }}</h5>
+                                <p class="card-text">Total</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ feedbacks.filter.status='pending').count }}</h5>
+                                <p class="card-text">Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ feedbacks.filter.status='resolved').count }}</h5>
+                                <p class="card-text">Resolved</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {% if feedbacks.count > 0 %}
+                                    {{ feedbacks.filter.status='resolved').count|floatformat:0 }}%
+                                    {% else %}
+                                    0%
+                                    {% endif %}
+                                </h5>
+                                <p class="card-text">Resolution Rate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

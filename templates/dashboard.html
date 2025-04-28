@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Dashboard Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h2 mb-0">Dashboard</h1>
+        <div>
+            <a href="{% url 'feedback:create' %}" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                <i class="bi bi-plus-lg"></i> New Feedback
+            </a>
+            {% if user.is_staff %}
+            <a href="{% url 'export_report' %}" class="d-none d-sm-inline-block btn btn-outline-secondary shadow-sm ms-2">
+                <i class="bi bi-download"></i> Export Report
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row">
+        <!-- Total Feedbacks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Feedbacks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-chat-square-text fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Feedbacks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-hourglass-split fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                In Progress</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.in_progress }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-gear fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resolved Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Resolved</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.resolved }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Main Content Column -->
+        <div class="col-lg-8">
+            <!-- Recent Feedbacks -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">Recent Feedbacks</h6>
+                    <a href="{% url 'feedback:list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_feedbacks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for feedback in recent_feedbacks %}
+                                <tr>
+                                    <td>{{ feedback.id }}</td>
+                                    <td>
+                                        <a href="{% url 'feedback:detail' feedback.id %}" class="text-decoration-none text-dark">
+                                            {{ feedback.subject|truncatechars:30 }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ feedback.get_status_color }}">
+                                            {{ feedback.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ feedback.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'feedback:detail' feedback.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
+                        <h5>No feedbacks yet</h5>
+                        <p class="text-muted">No feedbacks have been submitted yet.</p>
+                        <a href="{% url 'feedback:create' %}" class="btn btn-primary mt-2">
+                            <i class="bi bi-plus-lg"></i> Submit Feedback
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                    <div class="activity-timeline">
+                        {% for activity in recent_activities %}
+                        <div class="activity-item d-flex">
+                            <div class="activity-icon me-3">
+                                {% if activity.type == 'comment' %}
+                                <div class="icon-circle bg-primary">
+                                    <i class="bi bi-chat-text-fill text-white"></i>
+                                </div>
+                                {% elif activity.type == 'status_change' %}
+                                <div class="icon-circle bg-info">
+                                    <i class="bi bi-arrow-repeat text-white"></i>
+                                </div>
+                                {% elif activity.type == 'new_feedback' %}
+                                <div class="icon-circle bg-success">
+                                    <i class="bi bi-plus-lg text-white"></i>
+                                </div>
+                                {% elif activity.type == 'assignment' %}
+                                <div class="icon-circle bg-warning">
+                                    <i class="bi bi-person-check-fill text-white"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="activity-content flex-grow-1 pb-4 mb-2 border-bottom">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">{{ activity.user.get_full_name|default:activity.user.username }}</span>
+                                    <small class="text-muted">{{ activity.timestamp|date:"M d, Y g:i A" }}</small>
+                                </div>
+                                <p class="mb-0">{{ activity.description }}</p>
+                                {% if activity.feedback %}
+                                <a href="{% url 'feedback:detail' activity.feedback.id %}" class="text-decoration-none">
+                                    <small class="text-primary">
+                                        View feedback: {{ activity.feedback.subject|truncatechars:30 }}
+                                    </small>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-activity fs-1 text-muted mb-3"></i>
+                        <h5>No recent activity</h5>
+                        <p class="text-muted">Activity will appear here as users interact with the system.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="col-lg-4">
+            <!-- Category Distribution -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Feedback by Category</h6>
+                </div>
+                <div class="card-body">
+                    {% if category_stats %}
+                    <div class="chart-pie pt-4">
+                        <canvas id="categoryPieChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        {% for category, count in category_stats.items %}
+                        <span class="me-2">
+                            <i class="bi bi-circle-fill" style="color: {{ category_colors|get_item:forloop.counter0 }}"></i> {{ category }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-pie-chart fs-1 text-muted mb-3"></i>
+                        <h5>No data available</h5>
+                        <p class="text-muted">Submit feedbacks to see category distribution.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Assigned To Me (for staff/faculty) -->
+            {% if user.is_staff or user.user_type == 'faculty' %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">Assigned to Me</h6>
+                    <a href="{% url 'feedback:list' %}?assignee=me" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if assigned_to_me %}
+                    <div class="list-group list-group-flush">
+                        {% for feedback in assigned_to_me %}
+                        <a href="{% url 'feedback:detail' feedback.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-1 text-truncate" style="max-width: 70%">{{ feedback.subject }}</h6>
+                                <small class="text-muted">{{ feedback.updated_at|date:"M d" }}</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ feedback.get_status_color }}">{{ feedback.get_status_display }}</span>
+                                <span class="badge bg-{{ feedback.get_priority_color }}">{{ feedback.get_priority_display }}</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-person-check fs-1 text-muted mb-3"></i>
+                        <h5>No assigned feedbacks</h5>
+                        <p class="text-muted">You don't have any assigned feedbacks at the moment.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- My Recent Feedbacks (for students) -->
+            {% if user.is_authenticated and user.user_type == 'student' %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">My Recent Feedbacks</h6>
+                    <a href="{% url 'feedback:my_feedbacks' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if my_feedbacks %}
+                    <div class="list-group list-group-flush">
+                        {% for feedback in my_feedbacks %}
+                        <a href="{% url 'feedback:detail' feedback.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-1 text-truncate" style="max-width: 70%">{{ feedback.subject }}</h6>
+                                <small class="text-muted">{{ feedback.created_at|date:"M d" }}</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ feedback.get_status_color }}">{{ feedback.get_status_display }}</span>
+                                <small class="text-muted">{{ feedback.get_category_display }}</small>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-person-lines-fill fs-1 text-muted mb-3"></i>
+                        <h5>No feedbacks submitted</h5>
+                        <p class="text-muted">You haven't submitted any feedbacks yet.</p>
+                        <a href="{% url 'feedback:create' %}" class="btn btn-primary mt-2">
+                            <i class="bi bi-plus-lg"></i> Submit Feedback
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if category_stats %}
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category Pie Chart
+        var ctx = document.getElementById('categoryPieChart');
+        var myPieChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for category, count in category_stats.items %}'{{ category }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for category, count in category_stats.items %}{{ count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: [{% for color in category_colors %}'{{ color }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %} 

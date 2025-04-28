@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Comment on Feedback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #9C27B0;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #9C27B0;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        .comment {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .comment-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>New Comment on Feedback</h1>
+    </div>
+    <div class="content">
+        <p>Hello,</p>
+        <p>A new comment has been added to the following feedback:</p>
+        
+        <h2>{{ feedback.title }}</h2>
+        <p><strong>Category:</strong> {{ feedback.category.name }}</p>
+        <p><strong>Status:</strong> {{ feedback.status|title }}</p>
+        
+        <div class="comment">
+            <div class="comment-meta">
+                <strong>{{ comment.user.full_name }}</strong> commented on {{ comment.created_at|date:"F j, Y, g:i a" }}
+            </div>
+            <p>{{ comment.comment }}</p>
+        </div>
+        
+        <p>Please review the comment and take appropriate action if needed.</p>
+        
+        <a href="{{ site_url }}/feedback/{{ feedback.id }}" class="button">View Feedback</a>
+    </div>
+    <div class="footer">
+        <p>This is an automated message from {{ site_name }}. Please do not reply to this email.</p>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Feedback{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Submit Feedback</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Submit Feedback</h2>
+                <a href="{% url 'feedback:list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+            
+            <!-- Intro Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="bi bi-info-circle-fill text-primary fs-3"></i>
+                        </div>
+                        <div>
+                            <h5>Share Your Voice</h5>
+                            <p class="mb-0">Your feedback helps us improve our college services and environment. Please provide specific details to help us address your concern or suggestion more effectively.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feedback Form -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Feedback Form</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.subject.id_for_label }}" class="form-label">Subject <span class="text-danger">*</span></label>
+                            {{ form.subject|add_class:"form-control" }}
+                            {% if form.subject.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.subject.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">A brief title for your feedback. Be specific and concise.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">Category <span class="text-danger">*</span></label>
+                            {{ form.category|add_class:"form-select" }}
+                            {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.category.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Select the most relevant category for your feedback.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description <span class="text-danger">*</span></label>
+                            {{ form.description|add_class:"form-control"|attr:"rows:5" }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Provide detailed information about your feedback, including what happened, when, where, and why it matters.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.attachment.id_for_label }}" class="form-label">Attachment (Optional)</label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="{{ form.attachment.id_for_label }}" name="{{ form.attachment.html_name }}">
+                                <label class="input-group-text" for="{{ form.attachment.id_for_label }}"><i class="bi bi-paperclip"></i></label>
+                            </div>
+                            {% if form.attachment.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.attachment.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">You can attach a file (image, document, etc.) to support your feedback. Max size: 5MB.</small>
+                        </div>
+                        
+                        {% if form.priority %}
+                        <div class="mb-3">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">Priority</label>
+                            {{ form.priority|add_class:"form-select" }}
+                            {% if form.priority.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.priority.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Select the urgency level of your feedback.</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if form.anonymous %}
+                        <div class="mb-4 form-check">
+                            {{ form.anonymous|add_class:"form-check-input" }}
+                            <label class="form-check-label" for="{{ form.anonymous.id_for_label }}">
+                                Submit anonymously
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Check this if you want to remain anonymous. Note that you won't be able to track your feedback or receive direct responses.
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear Form
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send-fill"></i> Submit Feedback
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Feedback Tips -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Tips for Effective Feedback</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <strong>Be specific:</strong> Include concrete details and examples.
+                        </li>
+                        <li class="list-group-item">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <strong>Be constructive:</strong> Suggest potential improvements or solutions.
+                        </li>
+                        <li class="list-group-item">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <strong>Be objective:</strong> Focus on facts rather than emotions.
+                        </li>
+                        <li class="list-group-item">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <strong>Be timely:</strong> Submit feedback as soon as possible after the experience.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+
+{% block title %}Feedbacks{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-chat-square-dots-fill me-2"></i>
+            Feedbacks
+        </h2>
+        <div>
+            <a href="{% url 'feedback:create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Submit New Feedback
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel-fill me-2"></i>
+                        Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filter-form">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="search" name="search" 
+                                    placeholder="Search feedbacks..." value="{{ request.GET.search|default:'' }}">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" onchange="this.form.submit()">
+                                <option value="">All Statuses</option>
+                                {% for status_value, status_name in status_choices %}
+                                <option value="{{ status_value }}" {% if request.GET.status == status_value %}selected{% endif %}>
+                                    {{ status_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                {% for category_value, category_name in category_choices %}
+                                <option value="{{ category_value }}" {% if request.GET.category == category_value %}selected{% endif %}>
+                                    {{ category_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority" name="priority" onchange="this.form.submit()">
+                                <option value="">All Priorities</option>
+                                {% for priority_value, priority_name in priority_choices %}
+                                <option value="{{ priority_value }}" {% if request.GET.priority == priority_value %}selected{% endif %}>
+                                    {{ priority_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% if user.is_staff or user.user_type == 'faculty' %}
+                        <div class="mb-3">
+                            <label for="assignee" class="form-label">Assigned To</label>
+                            <select class="form-select" id="assignee" name="assignee" onchange="this.form.submit()">
+                                <option value="">All Assignees</option>
+                                <option value="unassigned" {% if request.GET.assignee == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                                <option value="me" {% if request.GET.assignee == 'me' %}selected{% endif %}>Assigned to Me</option>
+                                {% for faculty in faculty_list %}
+                                <option value="{{ faculty.id }}" {% if request.GET.assignee == faculty.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ faculty.get_full_name|default:faculty.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="sort" class="form-label">Sort By</label>
+                            <select class="form-select" id="sort" name="sort" onchange="this.form.submit()">
+                                <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %}>Newest First</option>
+                                <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                                <option value="-updated_at" {% if request.GET.sort == '-updated_at' %}selected{% endif %}>Recently Updated</option>
+                                <option value="priority" {% if request.GET.sort == 'priority' %}selected{% endif %}>Priority (Low to High)</option>
+                                <option value="-priority" {% if request.GET.sort == '-priority' %}selected{% endif %}>Priority (High to Low)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid mt-4">
+                            <a href="{% url 'feedback:list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            {% if total_stats %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Stats
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Feedbacks
+                            <span class="badge bg-primary rounded-pill">{{ total_stats.total }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Pending
+                            <span class="badge bg-warning rounded-pill">{{ total_stats.pending }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            In Progress
+                            <span class="badge bg-info rounded-pill">{{ total_stats.in_progress }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Resolved
+                            <span class="badge bg-success rounded-pill">{{ total_stats.resolved }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Closed
+                            <span class="badge bg-secondary rounded-pill">{{ total_stats.closed }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Feedback List -->
+        <div class="col-lg-9">
+            <!-- Result Count and View Toggle -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="mb-0">
+                    <strong>{{ paginator.count }}</strong> feedback{{ paginator.count|pluralize }} found
+                    {% if request.GET.search or request.GET.status or request.GET.category or request.GET.priority or request.GET.assignee %}
+                    <a href="{% url 'feedback:list' %}" class="ms-2 text-decoration-none">
+                        <i class="bi bi-x-circle"></i> Clear filters
+                    </a>
+                    {% endif %}
+                </p>
+                <div class="btn-group" role="group">
+                    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}view=list" class="btn btn-outline-secondary {% if view_type == 'list' or not view_type %}active{% endif %}">
+                        <i class="bi bi-list-ul"></i>
+                    </a>
+                    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}view=grid" class="btn btn-outline-secondary {% if view_type == 'grid' %}active{% endif %}">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                    </a>
+                </div>
+            </div>
+            
+            {% if feedbacks %}
+                {% if view_type == 'grid' %}
+                <!-- Grid View -->
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                    {% for feedback in feedbacks %}
+                    <div class="col">
+                        <div class="card shadow-sm h-100 position-relative feedback-card">
+                            <div class="card-status-indicator bg-{{ feedback.get_status_color }}"></div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title text-truncate mb-2" title="{{ feedback.subject }}">
+                                        <a href="{% url 'feedback:detail' feedback.id %}" class="text-decoration-none text-dark stretched-link">
+                                            {{ feedback.subject }}
+                                        </a>
+                                    </h5>
+                                    <span class="badge bg-{{ feedback.get_priority_color }} ms-2">{{ feedback.get_priority_display }}</span>
+                                </div>
+                                <p class="card-text text-muted mb-1 small">
+                                    #{{ feedback.id }} in {{ feedback.get_category_display }}
+                                </p>
+                                <p class="card-text description-preview mb-3">
+                                    {{ feedback.description|truncatechars:100 }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center card-metadata">
+                                    <div class="small text-muted">
+                                        <i class="bi bi-calendar me-1"></i> {{ feedback.created_at|date:"M d, Y" }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-chat-dots me-1"></i> {{ feedback.comments.count }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- List View -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Subject</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Priority</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feedback in feedbacks %}
+                            <tr>
+                                <td>{{ feedback.id }}</td>
+                                <td class="w-25">
+                                    <a href="{% url 'feedback:detail' feedback.id %}" class="text-decoration-none text-dark fw-medium">
+                                        {{ feedback.subject|truncatechars:40 }}
+                                    </a>
+                                    {% if feedback.comments.exists %}
+                                    <span class="badge bg-secondary ms-2">{{ feedback.comments.count }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ feedback.get_category_display }}</td>
+                                <td>
+                                    <span class="badge bg-{{ feedback.get_status_color }}">{{ feedback.get_status_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ feedback.get_priority_color }}">{{ feedback.get_priority_display }}</span>
+                                </td>
+                                <td>{{ feedback.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'feedback:detail' feedback.id %}" class="btn btn-sm btn-outline-primary" 
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if user == feedback.user or user.is_staff or user.user_type == 'faculty' %}
+                                        <a href="{% url 'feedback:edit' feedback.id %}" class="btn btn-sm btn-outline-secondary" 
+                                           title="Edit Feedback">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Feedback pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|cut:"page="|cut:"&page="|cut:"&amp;page=" }}&{% endif %}page=1">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|cut:"page="|cut:"&page="|cut:"&amp;page=" }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|cut:"page="|cut:"&page="|cut:"&amp;page=" }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|cut:"page="|cut:"&page="|cut:"&amp;page=" }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|cut:"page="|cut:"&page="|cut:"&amp;page=" }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <!-- No Feedbacks -->
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
+                        <h4>No feedbacks found</h4>
+                        {% if request.GET.search or request.GET.status or request.GET.category or request.GET.priority or request.GET.assignee %}
+                            <p class="text-muted">Try adjusting your search or filter criteria.</p>
+                            <a href="{% url 'feedback:list' %}" class="btn btn-outline-primary mt-2">
+                                <i class="bi bi-arrow-repeat"></i> Reset Filters
+                            </a>
+                        {% else %}
+                            <p class="text-muted">No feedbacks have been submitted yet.</p>
+                            <a href="{% url 'feedback:create' %}" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-lg"></i> Submit New Feedback
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
