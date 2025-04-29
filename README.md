@@ -1,79 +1,88 @@
 # College Feedback System
 
-A PGDCA Final Year Project that enables students to provide feedback to college administration in various categories and allows administrators to view and respond to feedback.
+A comprehensive web-based application designed to facilitate communication between students and college administration through a structured feedback system.
 
 ## Project Overview
 
-The College Feedback System is a web-based application designed to streamline the feedback collection process in educational institutions. The system provides:
+The College Feedback System enables educational institutions to digitize and streamline their feedback collection process. The system provides:
 
-- **Student Portal**: Submit feedback in three categories: Academic, Infrastructure, and Administrative
-- **Admin Dashboard**: View, manage, and resolve student feedback
-- **Authentication**: Simple login for students and administrators
-- **Responsive Design**: Works on desktops, tablets, and mobile devices
+- **Student Portal**: Submit feedback in multiple categories: Academic, Infrastructure, Administrative, and Other
+- **Admin Dashboard**: View, manage, and resolve student feedback with detailed analytics
+- **Authentication**: Secure email-based authentication for students and administrators
+- **Real-time Notifications**: Keep users informed about feedback status changes
+- **Responsive Design**: Works seamlessly across all devices
 
 ## Features
 
 ### For Students
-- Register and login securely
-- Submit feedback in three categories
-- Optionally upload photos with feedback
-- View submitted feedback and track status
-- Add comments to existing feedback
+- Register and login securely using email
+- Submit detailed feedback with optional photo attachments
+- View submitted feedback and track status in real-time
+- Add comments to existing feedback threads
+- Receive notifications about feedback updates
 
 ### For Administrators
-- Secure admin login
-- Dashboard with feedback statistics
-- View and respond to assigned feedback
-- Mark feedback as resolved
-- Communicate with students through comments
+- Secure admin login with role-based access control
+- Comprehensive dashboard with feedback statistics and analytics
+- View, assign, and respond to student feedback
+- Mark feedback as resolved with detailed history tracking
+- Communicate with students through threaded comments
 
 ## Technology Stack
 
 - **Frontend**:
-  - HTML5, CSS3
-  - Bootstrap 5 for responsive design
-  - Font Awesome for icons
+  - React 19.1 with React Router 7.5
+  - Bootstrap 5.3 for responsive design
+  - Axios for API communication
+  - HTML5, CSS3, JavaScript
 
 - **Backend**:
-  - Django 4.2 (Python web framework)
-  - SQLite database 
+  - Django 4.2.7 (Python web framework)
+  - Django REST Framework 3.14 for API endpoints
+  - JWT Authentication with Simple JWT 5.3.1
+  - SQLite database (development)
 
 ## Project Structure
 
 ```
 college_feedback_system/
-├── templates/            # Django HTML templates
-│   ├── accounts/         # User account templates
-│   └── feedback/         # Feedback templates
-├── college_feedback_system/  # Django project settings
-├── accounts/             # User account app
-├── feedback/             # Feedback functionality app
-├── authentication/       # Authentication app
-├── static/               # Static files (CSS, JS)
-├── media/                # User uploaded files
-└── manage.py             # Django project management
+├── accounts/                # User account management app
+├── authentication/          # Authentication app with JWT support
+├── college_feedback_system/ # Django project settings
+├── feedback/                # Core feedback functionality app
+├── media/                   # User uploaded files
+├── react-frontend/          # React frontend application
+│   ├── public/              # Static public assets
+│   └── src/                 # React source code
+├── static/                  # Static files (CSS, JS)
+├── staticfiles/             # Collected static files
+├── templates/               # Django HTML templates
+├── .venv/, venv/            # Virtual environment directories
+├── manage.py                # Django project management
+└── requirements.txt         # Python dependencies
 ```
 
 ## How to Run the Project
 
 ### Prerequisites
 - Python 3.8+ and pip
+- Node.js 14+ and npm
 - Git (optional)
 
-### Installation Steps
+### Backend Setup
 1. Clone the repository or download the project
    ```
    git clone https://github.com/yourusername/college_feedback_system.git
    cd college_feedback_system
    ```
 
-2. Create and activate a virtual environment (optional but recommended)
+2. Create and activate a virtual environment
    ```
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Install required dependencies
+3. Install required Python dependencies
    ```
    pip install -r requirements.txt
    ```
@@ -93,7 +102,32 @@ college_feedback_system/
    python manage.py runserver
    ```
 
-7. Open your browser and go to `http://localhost:8000`
+### Frontend Setup (React)
+1. Navigate to the React frontend directory
+   ```
+   cd react-frontend
+   ```
+
+2. Install Node.js dependencies
+   ```
+   npm install
+   ```
+
+3. Start the React development server
+   ```
+   npm start
+   ```
+
+4. Open your browser and go to `http://localhost:3000` for the React frontend
+   (The Django backend will be running at `http://localhost:8000`)
+
+## API Endpoints
+
+The system provides a RESTful API for frontend communication:
+
+- `/api/auth/` - Authentication endpoints
+- `/api/feedback/` - Feedback management
+- `/api/accounts/` - User account management
 
 ## Demo Credentials
 
@@ -109,28 +143,36 @@ college_feedback_system/
 
 (Screenshots would be inserted here)
 
-## Features Implemented
+## Key Project Components
 
-1. **Authentication System**
-   - Single login page for both students and admins
-   - Role-based access control
-   - Simple registration for students
+1. **User Management System**
+   - Custom User model with email-based authentication
+   - Role-based access control (Students and Admins)
+   - JWT authentication for secure API access
 
-2. **Feedback Management**
-   - Three feedback categories: Academic, Infrastructure, Administrative
-   - Optional photo upload with feedback
-   - Status tracking: Pending/Resolved
+2. **Feedback System**
+   - Multiple feedback categories with customizable fields
+   - File upload capability for supporting evidence
+   - Status tracking with full change history
+   - Comment threads for ongoing communication
 
-3. **Admin Features**
-   - View assigned feedback
-   - Mark feedback as resolved
-   - Admin-specific dashboard
+3. **Notification System**
+   - Real-time notifications for feedback updates
+   - Email notifications for important events
+   - Dashboard alerts for administrators
 
-4. **Student Features**
-   - Submit new feedback
-   - View submitted feedback
-   - Track feedback status
+4. **Analytics & Reporting**
+   - Feedback trend analysis
+   - Resolution time tracking
+   - Category-wise distribution reports
+
+## Future Enhancements
+
+- Mobile application for easier student access
+- Advanced analytics dashboard
+- Integration with college management systems
+- Department-specific feedback routing
 
 ---
 
-© 2023 College Feedback System - PGDCA Final Year Project
+© 2023-2024 College Feedback System
