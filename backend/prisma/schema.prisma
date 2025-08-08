@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  feedbacks Feedback[]
+  responses Response[]
+}
+
+model Survey {
+  id        String   @id @default(cuid())
+  title     String
+  isAnonymous Boolean @default(false)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  questions Json
+  responses Response[]
+}
+
+model Response {
+  id        String   @id @default(cuid())
+  surveyId  String
+  userId    String?
+  data      Json
+  createdAt DateTime @default(now())
+  Survey    Survey   @relation(fields: [surveyId], references: [id])
+  User      User?    @relation(fields: [userId], references: [id])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  rating    Int
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+}

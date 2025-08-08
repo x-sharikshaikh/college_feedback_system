@@ -1,0 +1,29 @@
+# Root
+node_modules/
+dist/
+.DS_Store
+*.log
+*.tmp
+tmp/
+coverage/
+.env
+.env.*
+.vscode/
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Prisma
+backend/prisma/*.db
+
+# Cypress
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+frontend/.nyc_output/
+
+# Build outputs
+frontend/build/
+frontend/dist/
+backend/build/
