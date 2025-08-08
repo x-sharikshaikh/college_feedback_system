@@ -2,12 +2,14 @@ import { Router } from 'express';
 import authRoutes from './auth';
 import surveyRoutes from './surveys';
 import { DashboardController } from '@controllers/dashboard.controller';
+import userRoutes from './users';
 import { requireAuth } from '@middleware/auth';
 
 export const router = Router();
 
 router.use('/auth', authRoutes);
 router.use('/surveys', surveyRoutes);
+router.use('/users', userRoutes);
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

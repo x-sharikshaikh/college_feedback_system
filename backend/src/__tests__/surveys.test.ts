@@ -2,12 +2,29 @@ import request from 'supertest';
 import { app } from '../app';
 import { prisma } from '@utils/prisma';
 
-async function createUser(role: 'STUDENT'|'FACULTY'|'ADMIN'){
+async function createUser(role: 'STUDENT'|'FACULTY'|'ADMIN', admin?: { token: string }){
   const email = `${role.toLowerCase()}_${Date.now()}@example.com`;
   const password = 'Passw0rd!123';
-  await request(app).post('/api/auth/register').send({ email, password, name: role });
-  // Promote role directly in DB for testing purposes
-  await prisma.user.update({ where: { email }, data: { role } });
+  const reg = await request(app).post('/api/auth/register').send({ email, password, confirmPassword: password, name: role });
+  expect([201,409]).toContain(reg.status);
+  if (role !== 'STUDENT'){
+    // Need an admin to elevate; if not provided, create one
+    let adminToken = admin?.token;
+    if (!adminToken){
+      const aemail = `admin_${Date.now()}@example.com`;
+      const apw = 'Passw0rd!123';
+      const areg = await request(app).post('/api/auth/register').send({ email: aemail, password: apw, confirmPassword: apw, name: 'Admin' });
+      expect(areg.status).toBe(201);
+      const auser = await prisma.user.findUnique({ where: { email: aemail } });
+      if (auser){ await prisma.user.update({ where: { id: auser.id }, data: { role: 'ADMIN' as any } }); }
+      const alog = await request(app).post('/api/auth/login').send({ email: aemail, password: apw });
+      adminToken = alog.body.token as string;
+    }
+    const u = await prisma.user.findUnique({ where: { email } });
+    if (u) {
+      await request(app).patch(`/api/users/${u.id}`).set('Authorization', `Bearer ${adminToken}`).send({ role });
+    }
+  }
   const login = await request(app).post('/api/auth/login').send({ email, password });
   return { token: login.body.token as string, email };
 }
@@ -18,9 +35,10 @@ describe('Surveys flow', () => {
   let surveyId = '';
 
   afterAll(async ()=>{
+    try { await prisma.response.deleteMany({ where: { surveyId } }); } catch(e){ /* ignore */ }
     try{ await prisma.survey.delete({ where: { id: surveyId } }); } catch(e){ /* already deleted */ }
-  if (faculty?.email) { try{ await prisma.user.delete({ where: { email: faculty.email } }); } catch(e){ /* ignore */ } }
-  if (student?.email) { try{ await prisma.user.delete({ where: { email: student.email } }); } catch(e){ /* ignore */ } }
+    if (faculty?.email) { try{ await prisma.user.delete({ where: { email: faculty.email } }); } catch(e){ /* ignore */ } }
+    if (student?.email) { try{ await prisma.user.delete({ where: { email: student.email } }); } catch(e){ /* ignore */ } }
     await prisma.$disconnect();
   });
 

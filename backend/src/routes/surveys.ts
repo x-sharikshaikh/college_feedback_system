@@ -14,9 +14,14 @@ router.get('/:id', requireAuth(), c.get);
 router.post('/', requireAuth(['FACULTY', 'ADMIN']), c.create);
 router.put('/:id', requireAuth(['FACULTY', 'ADMIN']), c.update);
 router.post('/:id/publish', requireAuth(['FACULTY', 'ADMIN']), c.publish);
+router.post('/:id/complete', requireAuth(['FACULTY', 'ADMIN']), c.complete);
+router.delete('/:id', requireAuth(['FACULTY', 'ADMIN']), c.delete);
 
 // Submit responses - any authenticated user
 router.post('/:id/submit', requireAuth(), c.submit);
+// Current user's response (view/update)
+router.get('/:id/my-response', requireAuth(), c.myResponse);
+router.put('/:id/response', requireAuth(), c.updateMyResponse);
 
 // Responses and analytics (faculty/admin)
 router.get('/:id/responses', requireAuth(['FACULTY','ADMIN']), c.responses);

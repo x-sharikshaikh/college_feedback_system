@@ -19,6 +19,7 @@ model User {
   password  String
   name      String
   role      Role     @default(STUDENT)
+  locked    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   feedbacks Feedback[]
@@ -30,6 +31,8 @@ model Survey {
   title     String
   isAnonymous Boolean @default(false)
   isPublished Boolean @default(false)
+  isCompleted Boolean @default(false)
+  description String?
   createdBy String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -54,4 +57,13 @@ model Feedback {
   rating    Int
   createdAt DateTime @default(now())
   User      User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  targetId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 
@@ -17,19 +17,21 @@ export default function Dashboard(){
   },[]);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Dashboard</h2>
-        {user && <button onClick={logout} className="bg-gray-800 text-white px-3 py-1">Logout</button>}
+    <div className="max-w-6xl mx-auto p-2 sm:p-6 space-y-6">
+      <div className="glass card flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Dashboard</h2>
+          {user && <p className="text-sm opacity-80">Welcome, <b>{user.name}</b> ({user.role})</p>}
+        </div>
+        {user && <button onClick={logout} className="btn btn-ghost">Logout</button>}
       </div>
-      {user && <p>Welcome, <b>{user.name}</b> ({user.role})</p>}
       {error && <p className="text-red-600">{error}</p>}
       {cards && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Object.entries(cards).map(([k,v]) => (
-            <div key={k} className="border rounded p-4 bg-white shadow-sm">
-              <div className="text-sm text-gray-600">{k}</div>
-              <div className="text-2xl font-semibold">{String(v)}</div>
+            <div key={k} className="glass card transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+              <div className="text-sm opacity-70">{k}</div>
+              <div className="mt-1 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-400">{String(v)}</div>
             </div>
           ))}
         </div>

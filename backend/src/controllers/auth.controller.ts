@@ -8,9 +8,13 @@ import { config } from '@config/env';
 const registerSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
+  confirmPassword: Joi.string().required(),
   name: Joi.string().min(2).max(100).required(),
   role: Joi.string().valid('STUDENT', 'FACULTY', 'ADMIN').default('STUDENT'),
-});
+}).custom((val, helpers)=> {
+  if (val.password !== val.confirmPassword) return helpers.error('any.invalid');
+  return val;
+}, 'password match');
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -22,12 +26,15 @@ export class AuthController {
     const { error, value } = registerSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.message });
 
-    const existing = await prisma.user.findUnique({ where: { email: value.email } });
+    // Normalize email
+    const email = String(value.email).trim().toLowerCase();
+
+    const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ error: 'Email already in use' });
 
     const hash = await bcrypt.hash(value.password, 10);
     const user = await prisma.user.create({
-      data: { email: value.email, password: hash, name: value.name, role: value.role },
+      data: { email, password: hash, name: value.name, role: value.role },
       select: { id: true, email: true, name: true, role: true, createdAt: true },
     });
 
@@ -36,13 +43,18 @@ export class AuthController {
   }
 
   async login(req: Request, res: Response) {
-    const { error, value } = loginSchema.validate(req.body);
+  const { error, value } = loginSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.message });
 
-    const user = await prisma.user.findUnique({ where: { email: value.email } });
+  // Normalize email
+  const email = String(value.email).trim().toLowerCase();
+
+  const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const ok = await bcrypt.compare(value.password, user.password);
+  if ((user as any).locked) return res.status(403).json({ error: 'Account is locked' });
+
+  const ok = await bcrypt.compare(value.password, user.password);
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 
     const safeUser = { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt };
