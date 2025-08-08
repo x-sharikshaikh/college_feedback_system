@@ -2,15 +2,27 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { randomUUID } from 'crypto';
 import { config } from '@config/env';
 import { router } from '@routes/index';
 
 export const app = express();
 
+// Attach a request id for tracing
+app.use((req, res, next) => {
+  const id = (req.headers['x-request-id'] as string) || randomUUID();
+  (req as any).id = id;
+  res.setHeader('X-Request-Id', id);
+  next();
+});
+
+// Add request id to logs
+morgan.token('id', (req) => (req as any).id);
+app.use(morgan(config.nodeEnv === 'production' ? ':id :method :url :status - :response-time ms' : ':id :method :url :status - :response-time ms'));
+
 app.use(helmet());
 app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json({ limit: '1mb' }));
-app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 
 app.use('/api', router);
 

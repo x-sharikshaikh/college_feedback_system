@@ -79,6 +79,11 @@ export class SurveysController {
     const survey = await this.service.get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Not found' });
     if (role === 'STUDENT' && !survey.isPublished) return res.status(403).json({ error: 'Forbidden' });
+    // Enforce one response per student per survey when not anonymous
+    if (role === 'STUDENT' && !survey.isAnonymous && userId) {
+      const existing = await prisma.response.findFirst({ where: { surveyId: survey.id, userId } });
+      if (existing) return res.status(409).json({ error: 'You have already submitted this survey' });
+    }
     const response = await prisma.response.create({
       data: {
         surveyId: survey.id,
