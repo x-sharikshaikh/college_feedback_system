@@ -51,7 +51,14 @@ export class AuthController {
   }
 
   async me(req: Request, res: Response) {
-    // Placeholder: In production, extract from JWT middleware
-    return res.json({ message: 'Implement /auth/me with auth middleware' });
+    const authUser = (req as any).user as { sub: string; role: 'STUDENT' | 'FACULTY' | 'ADMIN' } | undefined;
+    if (!authUser) return res.status(401).json({ error: 'Unauthorized' });
+
+    const user = await prisma.user.findUnique({
+      where: { id: authUser.sub },
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json({ user });
   }
 }

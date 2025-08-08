@@ -10,6 +10,8 @@ module.exports = {
   env: { node: true, es2020: true, jest: true },
   ignorePatterns: ['dist', 'node_modules'],
   rules: {
-    '@typescript-eslint/no-explicit-any': 'off'
+  '@typescript-eslint/no-explicit-any': 'off',
+  '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+  'prettier/prettier': 'off'
   }
 }

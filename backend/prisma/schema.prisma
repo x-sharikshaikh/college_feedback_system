@@ -29,6 +29,7 @@ model Survey {
   id        String   @id @default(cuid())
   title     String
   isAnonymous Boolean @default(false)
+  isPublished Boolean @default(false)
   createdBy String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

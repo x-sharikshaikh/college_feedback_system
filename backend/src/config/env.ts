@@ -4,7 +4,7 @@ dotenv.config();
 export const config = {
   port: Number(process.env.PORT || 4000),
   nodeEnv: process.env.NODE_ENV || 'development',
-  corsOrigin: process.env.CORS_ORIGIN || '*',
+  corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173','http://localhost:5175'],
   jwtSecret: process.env.JWT_SECRET || 'change-me',
   databaseUrl: process.env.DATABASE_URL || '',
   redisUrl: process.env.REDIS_URL,

@@ -4,29 +4,39 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+  "dev": "vite",
+  "dev:e2e": "vite --port 5175",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx",
-    "test": "echo \"No tests yet\""
+  "test": "echo \"No tests yet\"",
+  "cy:open": "cypress open",
+  "cy:run": "cypress run",
+  "e2e": "concurrently -k -n FE,TEST -c blue,magenta \"npm run dev:e2e\" \"wait-on http://localhost:5175 http://localhost:4000 && cypress run --config baseUrl=http://localhost:5175\"",
+  "e2e:with-be": "concurrently -k -n FE,BE,TEST -c blue,green,magenta \"npm run dev:e2e\" \"cd ..\\backend && npm run dev\" \"wait-on http://localhost:5175 http://localhost:4000 && cypress run --config baseUrl=http://localhost:5175\""
   },
   "dependencies": {
+    "@types/react-router-dom": "^5.3.3",
     "axios": "^1.7.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.8.0",
     "recharts": "^2.12.7"
   },
   "devDependencies": {
-  "@vitejs/plugin-react": "^4.3.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+  "concurrently": "^9.0.1",
+    "cypress": "^13.14.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
     "postcss": "^8.4.40",
+  "wait-on": "^8.0.2",
     "tailwindcss": "^3.4.9",
     "typescript": "^5.5.4",
     "vite": "^5.4.1"
