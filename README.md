@@ -196,8 +196,9 @@ Ensure backend is listening on 4000. If it falls back to 4001, either stop the e
 
 Local testing admin:
 
-- email: `admin@college.local`
-- password: `Admin@123`
+- email: `gojosatoru@gmail.com`
+- password: `Satoru@123
+`
 
 If login shows "Invalid credentials", ensure the API is reachable and the email is trimmed/lowercased (server does this automatically).
 
