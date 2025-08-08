@@ -40,6 +40,12 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Backend lint & typecheck
+        working-directory: backend
+        run: |
+          npm run lint
+          npx tsc -p . --noEmit
+
       - name: Wait for Postgres
         run: npx -y wait-on tcp:localhost:5432
 
@@ -84,6 +90,12 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
+
+      - name: Frontend lint & typecheck
+        working-directory: frontend
+        run: |
+          npm run lint
+          npx tsc --noEmit
 
       - name: Start frontend (detached)
         working-directory: frontend
