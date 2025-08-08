@@ -88,6 +88,16 @@ cd frontend
 npm install
 ```
 
+## Optional: Enable Redis-backed rate limiting
+
+Set REDIS_URL in backend/.env, for example:
+
+```ini
+REDIS_URL=redis://localhost:6379
+```
+
+If REDIS_URL is not set or Redis is unreachable, the app falls back to in-memory rate limits.
+
 ## Roadmap (Commits)
 
 1. chore: init repo + structure
