@@ -88,6 +88,23 @@ cd frontend
 npm install
 ```
 
+### Windows PowerShell tip
+
+If you see an error like `=http://localhost:4000 is not recognized`, it means the env var assignment was malformed. Make sure you include the variable name when setting it and keep it on the same or previous line:
+
+```powershell
+# Correct
+$env:CYPRESS_API_URL='http://localhost:4000'
+cd frontend
+npm run cy:run
+
+# Also OK on one line before the command
+$env:CYPRESS_API_URL='http://localhost:4000'; npm run cy:run
+
+# Incorrect (will fail)
+=http://localhost:4000; npm run cy:run
+```
+
 ## Optional: Enable Redis-backed rate limiting
 
 Set REDIS_URL in backend/.env, for example:
@@ -192,6 +209,13 @@ Ensure backend is listening on 4000. If it falls back to 4001, either stop the e
 
 - Backend: `GET http://localhost:4000/api/health` should return 200 OK.
 - Frontend banner: if API is down or URL mismatch, a red banner appears near the top.
+
+## Final verification checklist
+
+- Frontend `.env` contains `VITE_API_URL=http://localhost:4000` and Vite serves at `http://127.0.0.1:5175/`.
+- Backend starts and logs `API listening on http://localhost:4000`; `GET /api/health` returns 200.
+- E2E: from `frontend/`, `npm run e2e:with-be` completes with “All specs passed”.
+- Optional: backend Jest (`cd backend; npm test`) passes locally.
 
 ## Seed credentials
 
