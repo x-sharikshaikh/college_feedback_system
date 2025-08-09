@@ -1,7 +1,7 @@
 describe('College Feedback System - Smoke E2E', () => {
   const unique = Date.now();
-  const staff = { name: 'Staff', email: `staff${unique}@test.com`, password: 'Passw0rd!', role: 'FACULTY' };
-  const student = { name: 'Student', email: `student${unique}@test.com`, password: 'Passw0rd!' };
+  const staff = { name: 'Staff', email: `staff${unique}@test.com`, password: 'Passw0rd!', confirmPassword: 'Passw0rd!', role: 'FACULTY' };
+  const student = { name: 'Student', email: `student${unique}@test.com`, password: 'Passw0rd!', confirmPassword: 'Passw0rd!' };
 
   const apiBase = Cypress.env('API_URL') || 'http://localhost:4000';
 

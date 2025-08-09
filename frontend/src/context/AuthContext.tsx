@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import api from '../lib/api';
 
 export type User = { id: string; email: string; name: string; role: 'STUDENT' | 'FACULTY' | 'ADMIN' };
@@ -8,7 +8,7 @@ type AuthState = {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (payload: { email: string; password: string; name: string; role?: User['role'] }) => Promise<void>;
+  register: (payload: { email: string; password: string; confirmPassword?: string; name: string; role?: User['role'] }) => Promise<void>;
   logout: () => void;
   refreshMe: () => Promise<void>;
 };
@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState<boolean>(false);
 
-  const refreshMe = async () => {
+  const refreshMe = useCallback(async () => {
     if (!token) return;
     try {
       const res = await api.get('/api/auth/me');
@@ -30,16 +30,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(null);
       localStorage.removeItem('token');
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) refreshMe();
-  }, [token]);
+  }, [token, refreshMe]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/login', { email, password });
+  const res = await api.post('/api/auth/login', { email: email.trim().toLowerCase(), password });
       localStorage.setItem('token', res.data.token);
       setToken(res.data.token);
       setUser(res.data.user);
@@ -48,10 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (payload: { email: string; password: string; name: string; role?: User['role'] }) => {
+  const register = async (payload: { email: string; password: string; confirmPassword?: string; name: string; role?: User['role'] }) => {
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/register', payload);
+  const res = await api.post('/api/auth/register', { ...payload, email: payload.email.trim().toLowerCase() });
       localStorage.setItem('token', res.data.token);
       setToken(res.data.token);
       setUser(res.data.user);

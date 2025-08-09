@@ -12,6 +12,8 @@ let redis: RedisClientType | null = null;
 let redisReady = false;
 
 async function getRedis(): Promise<RedisClientType | null> {
+  // Skip Redis in test environment to prevent connection leaks during Jest
+  if (config.nodeEnv === 'test') return null;
   if (!config.redisUrl) return null;
   if (redis) return redisReady ? redis : null;
   try {
@@ -26,6 +28,11 @@ async function getRedis(): Promise<RedisClientType | null> {
     return null;
   }
 }
+
+// Best-effort graceful shutdown for Redis client
+const closeRedis = async () => { try { await redis?.quit(); } catch { /* noop */ } };
+process.once('SIGINT', () => { void closeRedis(); });
+process.once('SIGTERM', () => { void closeRedis(); });
 
 export function roleRateLimit(opts: Partial<Record<'STUDENT' | 'FACULTY' | 'ADMIN', WindowConfig>>) {
   const defaults: Record<string, WindowConfig> = {

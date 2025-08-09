@@ -1,7 +1,7 @@
 describe('Survey flow: create → publish → submit → analytics', () => {
   const unique = Date.now();
-  const staff = { name: 'Staff', email: `staff${unique}@test.com`, password: 'Passw0rd!', role: 'FACULTY' };
-  const student = { name: 'Student', email: `student${unique}@test.com`, password: 'Passw0rd!' };
+  const staff = { name: 'Staff', email: `staff${unique}@test.com`, password: 'Passw0rd!', confirmPassword: 'Passw0rd!', role: 'FACULTY' };
+  const student = { name: 'Student', email: `student${unique}@test.com`, password: 'Passw0rd!', confirmPassword: 'Passw0rd!' };
   const apiBase = Cypress.env('API_URL') || 'http://localhost:4000';
 
   it('covers full flow end-to-end', () => {
@@ -40,11 +40,11 @@ describe('Survey flow: create → publish → submit → analytics', () => {
         cy.contains('a', 'Open').click();
       });
       cy.contains('h2', 'Survey', { timeout: 30000 }).should('be.visible');
-      // Wait for form fields to render
-      cy.get('input[type=\"radio\"][name=\"q1\"]', { timeout: 30000 }).should('exist');
+      // Wait for form fields to render (use stable name-based selectors)
+      cy.get('input[type="radio"][name="q1"]', { timeout: 30000 }).should('exist');
       // Likert 5 and text answer
-      cy.get('input[type=\"radio\"][name=\"q1\"]').last().check({ force: true });
-      cy.contains('.font-medium', 'Comments').parent().find('input').type('Great!');
+      cy.get('input[type="radio"][name="q1"]').last().check({ force: true });
+      cy.get('input[name="q2"]').type('Great!');
       cy.contains('button', /submit/i).click();
     });
 
@@ -52,6 +52,9 @@ describe('Survey flow: create → publish → submit → analytics', () => {
     cy.request('POST', `${apiBase}/api/auth/login`, { email: staff.email, password: staff.password }).then(res => {
       const staffToken = res.body.token as string;
       cy.get<string>('@surveyId').then((id) => {
+        // Wait until backend analytics reflect the submitted response to avoid UI race conditions
+        cy.request({ method: 'GET', url: `${apiBase}/api/surveys/${id}/analytics`, headers: { Authorization: `Bearer ${staffToken}` } })
+          .its('body.totalResponses').should('eq', 1);
         cy.visit(`/surveys/${id}` , { onBeforeLoad(win){ win.localStorage.setItem('token', staffToken); } });
       });
       cy.contains('h3', 'Analytics', { timeout: 30000 }).should('be.visible');

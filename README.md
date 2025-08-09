@@ -88,6 +88,23 @@ cd frontend
 npm install
 ```
 
+### Windows PowerShell tip
+
+If you see an error like `=http://localhost:4000 is not recognized`, it means the env var assignment was malformed. Make sure you include the variable name when setting it and keep it on the same or previous line:
+
+```powershell
+# Correct
+$env:CYPRESS_API_URL='http://localhost:4000'
+cd frontend
+npm run cy:run
+
+# Also OK on one line before the command
+$env:CYPRESS_API_URL='http://localhost:4000'; npm run cy:run
+
+# Incorrect (will fail)
+=http://localhost:4000; npm run cy:run
+```
+
 ## Optional: Enable Redis-backed rate limiting
 
 Set REDIS_URL in backend/.env, for example:
@@ -106,3 +123,112 @@ If REDIS_URL is not set or Redis is unreachable, the app falls back to in-memory
 4. feat(core): survey builder, feedback submission, analytics
 5. test: Jest + Cypress
 6. chore: docker + CI
+
+## API highlights
+
+- Auth
+	- POST /api/auth/register (requires confirmPassword)
+	- POST /api/auth/login
+- Surveys
+	- GET /api/surveys (students see only published + open)
+	- GET /api/surveys/:id
+	- POST /api/surveys (faculty/admin)
+	- PUT /api/surveys/:id (faculty/admin)
+	- POST /api/surveys/:id/publish (faculty/admin)
+	- POST /api/surveys/:id/complete (faculty/admin)
+	- DELETE /api/surveys/:id (faculty/admin)
+	- POST /api/surveys/:id/submit (auth)
+	- GET /api/surveys/:id/my-response (auth; non-anonymous only)
+	- PUT /api/surveys/:id/response (auth; edit own response)
+	- GET /api/surveys/:id/analytics (faculty/admin)
+	- GET /api/surveys/:id/export.{csv|xlsx|pdf} (faculty/admin)
+- Users (admin)
+	- GET /api/users, GET /api/users/:id
+	- PATCH /api/users/:id (edit role, lock account)
+	- DELETE /api/users/:id (safe cascade: detach responses, delete feedbacks)
+
+## Features cheatsheet
+- Survey builder: drag-and-drop sections and questions with required flags and description.
+- Student flow: one submission per non-anonymous survey; can view and edit via my-response; edit button only when published and open.
+- Accessibility: required inputs have aria-invalid and aria-describedby.
+- Admin: manage users (list/detail/delete), change roles, lock accounts; deletes are audit-logged.
+
+## Backend tests
+Run Jest tests:
+
+```powershell
+cd backend
+npm test
+```
+
+Included:
+- updateMyResponse required validation
+- admin delete safety (responses detached, feedbacks removed)
+
+## Start/Stop (Windows PowerShell)
+
+Dev start
+
+```powershell
+# Backend dev (Express + TS)
+cd backend
+npm run dev
+
+# Frontend dev (Vite) in another PowerShell
+cd ../frontend
+# Ensure VITE_API_URL=http://localhost:4000 in frontend/.env so the app hits the running backend
+npm run dev
+```
+
+Dev stop (kill all running dev servers)
+
+```powershell
+# Stop any node/npm processes (safe for local dev)
+Stop-Process -Name node -Force -ErrorAction SilentlyContinue
+Stop-Process -Name npm -Force -ErrorAction SilentlyContinue
+
+# Verify ports are free (no output means free)
+netstat -ano | findstr ":4000"
+netstat -ano | findstr ":4001"
+netstat -ano | findstr ":5175"
+```
+
+If the backend starts twice (both 4000 and 4001), stop processes above and start once.
+
+## Environment alignment
+
+- Frontend API base: `frontend/.env`
+
+```ini
+VITE_API_URL=http://localhost:4000
+```
+
+Ensure backend is listening on 4000. If it falls back to 4001, either stop the extra instance and restart, or temporarily set `VITE_API_URL` to `http://localhost:4001` and restart the frontend.
+
+## Health checks
+
+- Backend: `GET http://localhost:4000/api/health` should return 200 OK.
+- Frontend banner: if API is down or URL mismatch, a red banner appears near the top.
+
+## Final verification checklist
+
+- Frontend `.env` contains `VITE_API_URL=http://localhost:4000` and Vite serves at `http://127.0.0.1:5175/`.
+- Backend starts and logs `API listening on http://localhost:4000`; `GET /api/health` returns 200.
+- E2E: from `frontend/`, `npm run e2e:with-be` completes with “All specs passed”.
+- Optional: backend Jest (`cd backend; npm test`) passes locally.
+
+## Seed credentials
+
+Local testing admin:
+
+- email: `gojosatoru@gmail.com`
+- password: `Satoru@123`
+
+If login shows "Invalid credentials", ensure the API is reachable and the email is trimmed/lowercased (server does this automatically).
+
+## Troubleshooting
+
+- Port in use: stop all node/npm processes as shown above, then start again.
+- CORS: ensure backend `CORS_ORIGIN` includes `http://127.0.0.1:5175` and `http://localhost:5173` if needed.
+- Frontend can’t reach API: confirm `VITE_API_URL` matches backend port and restart Vite.
+- Lint issues: `npm run lint` inside both `backend/` and `frontend/`.

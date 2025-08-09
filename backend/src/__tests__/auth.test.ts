@@ -14,7 +14,8 @@ describe('Auth integration', () => {
   it('registers a new user and returns token', async () => {
     const res = await request(app).post('/api/auth/register').send({
       email,
-      password,
+  password,
+  confirmPassword: password,
       name: 'Test User'
     });
     expect(res.status).toBe(201);

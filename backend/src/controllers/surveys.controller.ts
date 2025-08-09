@@ -5,13 +5,16 @@ import { prisma } from '@utils/prisma';
 
 const createSchema = Joi.object({
   title: Joi.string().min(3).max(200).required(),
+  description: Joi.string().max(1000).allow('', null),
   isAnonymous: Joi.boolean().default(false),
-  questions: Joi.object().required(), // expect a JSON structure { items: [...] }
+  questions: Joi.object().required(), // supports { items: [...] } or { sections: [...], description? }
 });
 
 const updateSchema = Joi.object({
   title: Joi.string().min(3).max(200),
+  description: Joi.string().max(1000).allow('', null),
   isAnonymous: Joi.boolean(),
+  isCompleted: Joi.boolean(),
   questions: Joi.object(),
 }).min(1);
 
@@ -25,7 +28,7 @@ export class SurveysController {
   list = async (req: Request, res: Response) => {
     const role = (req as any).user?.role as 'STUDENT' | 'FACULTY' | 'ADMIN' | undefined;
     if (role === 'STUDENT') {
-      const surveys = await prisma.survey.findMany({ where: ({ isPublished: true } as any), orderBy: { createdAt: 'desc' } });
+  const surveys = await prisma.survey.findMany({ where: ({ isPublished: true, isCompleted: false } as any), orderBy: { createdAt: 'desc' } });
       return res.json({ items: surveys });
     }
     const surveys = await this.service.list();
@@ -46,6 +49,7 @@ export class SurveysController {
     const user = (req as any).user as { sub: string };
     const created = await this.service.create({
       title: value.title,
+  description: value.description ?? null,
       isAnonymous: value.isAnonymous,
       questions: value.questions,
       createdBy: user.sub,
@@ -78,12 +82,34 @@ export class SurveysController {
     const userId = (req as any).user?.sub as string | undefined;
     const survey = await this.service.get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Not found' });
-    if (role === 'STUDENT' && !survey.isPublished) return res.status(403).json({ error: 'Forbidden' });
+    if (role === 'STUDENT' && (!survey.isPublished || survey.isCompleted)) return res.status(403).json({ error: 'Forbidden' });
     // Enforce one response per student per survey when not anonymous
     if (role === 'STUDENT' && !survey.isAnonymous && userId) {
       const existing = await prisma.response.findFirst({ where: { surveyId: survey.id, userId } });
       if (existing) return res.status(409).json({ error: 'You have already submitted this survey' });
     }
+    // Required question validation (client-side should validate too)
+    try {
+      const qroot = (survey as any).questions as any;
+      const items: any[] = Array.isArray(qroot?.sections)
+        ? qroot.sections.flatMap((s: any) => Array.isArray(s?.items) ? s.items : [])
+        : (Array.isArray(qroot?.items) ? qroot.items : []);
+      const requiredItems = items.filter((q: any) => q && q.required);
+      for (const q of requiredItems) {
+        const v = (value.data as any)?.[q.key];
+        if (String(q.type).toLowerCase() === 'likert') {
+          const num = Number(v);
+          const scale = Number(q.scale || 5) || 5;
+          if (Number.isNaN(num) || num < 1 || num > scale) {
+            return res.status(400).json({ error: `Missing or invalid required answer for ${q.label || q.key}` });
+          }
+        } else {
+          if (v === undefined || v === null || String(v).trim() === '') {
+            return res.status(400).json({ error: `Missing required answer for ${q.label || q.key}` });
+          }
+        }
+      }
+    } catch { /* ignore and allow submission if structure unexpected */ }
     const response = await prisma.response.create({
       data: {
         surveyId: survey.id,
@@ -105,6 +131,56 @@ export class SurveysController {
     return res.json({ count: items.length, items });
   };
 
+  myResponse = async (req: Request, res: Response) => {
+    const role = (req as any).user?.role as 'STUDENT' | 'FACULTY' | 'ADMIN' | undefined;
+    const userId = (req as any).user?.sub as string | undefined;
+    const survey = await this.service.get(req.params.id);
+    if (!survey) return res.status(404).json({ error: 'Not found' });
+    if (role === 'STUDENT' && !survey.isPublished) return res.status(404).json({ error: 'Not found' });
+    if (survey.isAnonymous) return res.json({ exists: false });
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const r = await prisma.response.findFirst({ where: { surveyId: survey.id, userId }, select: { id: true, createdAt: true, data: true } });
+    if (!r) return res.json({ exists: false });
+    return res.json({ exists: true, response: r });
+  };
+
+  updateMyResponse = async (req: Request, res: Response) => {
+    const { error, value } = submitSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.message });
+    const role = (req as any).user?.role as 'STUDENT' | 'FACULTY' | 'ADMIN' | undefined;
+    const userId = (req as any).user?.sub as string | undefined;
+    const survey = await this.service.get(req.params.id);
+    if (!survey) return res.status(404).json({ error: 'Not found' });
+    if (role === 'STUDENT' && (!survey.isPublished || survey.isCompleted)) return res.status(403).json({ error: 'Forbidden' });
+    if (survey.isAnonymous || !userId) return res.status(400).json({ error: 'Cannot edit anonymous submission' });
+    const existing = await prisma.response.findFirst({ where: { surveyId: survey.id, userId }, select: { id: true } });
+    if (!existing) return res.status(404).json({ error: 'No existing submission to update' });
+    // Required validation same as submit
+    try {
+      const qroot = (survey as any).questions as any;
+      const items: any[] = Array.isArray(qroot?.sections)
+        ? qroot.sections.flatMap((s: any) => Array.isArray(s?.items) ? s.items : [])
+        : (Array.isArray(qroot?.items) ? qroot.items : []);
+      const requiredItems = items.filter((q: any) => q && q.required);
+      for (const q of requiredItems) {
+        const v = (value.data as any)?.[q.key];
+        if (String(q.type).toLowerCase() === 'likert') {
+          const num = Number(v);
+          const scale = Number(q.scale || 5) || 5;
+          if (Number.isNaN(num) || num < 1 || num > scale) {
+            return res.status(400).json({ error: `Missing or invalid required answer for ${q.label || q.key}` });
+          }
+        } else {
+          if (v === undefined || v === null || String(v).trim() === '') {
+            return res.status(400).json({ error: `Missing required answer for ${q.label || q.key}` });
+          }
+        }
+      }
+  } catch { /* ignore validation if structure unexpected */ }
+    const updated = await prisma.response.update({ where: { id: existing.id }, data: { data: value.data } });
+    return res.json({ ok: true, responseId: updated.id });
+  };
+
   analytics = async (req: Request, res: Response) => {
     const survey = await this.service.get(req.params.id);
     if (!survey) return res.status(404).json({ error: 'Not found' });
@@ -124,7 +200,9 @@ export class SurveysController {
     const responses = await prisma.response.findMany({ where, select: { data: true } });
     const totalResponses = responses.length;
     const questions = (survey as any).questions as any;
-    const items = Array.isArray(questions?.items) ? questions.items : [];
+    const items = Array.isArray(questions?.sections)
+      ? questions.sections.flatMap((s: any) => Array.isArray(s?.items) ? s.items : [])
+      : (Array.isArray(questions?.items) ? questions.items : []);
     const likerts = items.filter((q: any) => q?.type?.toLowerCase?.() === 'likert' && q.key);
     const perLikert: Record<string, { label: string; scale: number; avg: number; counts: Record<string, number> }> = {};
     for (const q of likerts) {
@@ -170,7 +248,9 @@ export class SurveysController {
     });
 
     const questions = (survey as any).questions as any;
-    const items = Array.isArray(questions?.items) ? questions.items : [];
+    const items = Array.isArray(questions?.sections)
+      ? questions.sections.flatMap((s: any) => Array.isArray(s?.items) ? s.items : [])
+      : (Array.isArray(questions?.items) ? questions.items : []);
     const keys: string[] = items.map((q: any) => q?.key).filter((k: any) => typeof k === 'string');
 
     // Build metadata header rows
@@ -303,7 +383,9 @@ export class SurveysController {
 
     const responses = await prisma.response.findMany({ where, select: { data: true } });
     const questions = (survey as any).questions as any;
-    const items = Array.isArray(questions?.items) ? questions.items : [];
+    const items = Array.isArray(questions?.sections)
+      ? questions.sections.flatMap((s: any) => Array.isArray(s?.items) ? s.items : [])
+      : (Array.isArray(questions?.items) ? questions.items : []);
     const likerts = items.filter((q: any) => q?.type?.toLowerCase?.() === 'likert' && q.key);
     const perLikert: Record<string, { label: string; scale: number; counts: Record<string, number> }> = {};
     for (const q of likerts) {
@@ -339,5 +421,22 @@ export class SurveysController {
       doc.moveDown(0.5);
     }
     doc.end();
+  };
+
+  complete = async (req: Request, res: Response) => {
+    const schema = Joi.object({ isCompleted: Joi.boolean().required() });
+    const { error, value } = schema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.message });
+    const exists = await this.service.get(req.params.id);
+    if (!exists) return res.status(404).json({ error: 'Not found' });
+    const updated = await this.service.setCompleted(req.params.id, value.isCompleted);
+    return res.json({ survey: updated });
+  };
+
+  delete = async (req: Request, res: Response) => {
+    const exists = await this.service.get(req.params.id);
+    if (!exists) return res.status(404).json({ error: 'Not found' });
+    await this.service.remove(req.params.id);
+    return res.status(204).send();
   };
 }
