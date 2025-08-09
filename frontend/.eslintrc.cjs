@@ -1,29 +1,41 @@
-/* @type {import('eslint').Linter.Config} */
+// ESLint configuration for React + TypeScript (Vite)
+// Enables TS/TSX parsing and common React/React Hooks rules.
 module.exports = {
-  root: true,
-  env: { browser: true, es2021: true },
-  parser: '@typescript-eslint/parser',
-  parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
-  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'react-refresh'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    // React core rules and the new JSX runtime for React 17+
-    'plugin:react/recommended',
-    'plugin:react/jsx-runtime',
-    // Hooks and Vite React Fast Refresh best practices
-  'plugin:react-hooks/recommended',
-  ],
-  ignorePatterns: ['dist', 'node_modules'],
-  rules: {
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-  // Align with react-refresh recommendations without using the flat-config shareable config
-  'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-  },
-  settings: {
-    react: {
-      version: 'detect',
-    },
-  },
-}
+	root: true,
+	env: {
+		browser: true,
+		es2022: true,
+	},
+	ignorePatterns: [
+		'dist/',
+		'node_modules/',
+	],
+	parser: '@typescript-eslint/parser',
+	parserOptions: {
+		ecmaVersion: 'latest',
+		sourceType: 'module',
+		ecmaFeatures: { jsx: true },
+	},
+	settings: {
+		react: { version: 'detect' },
+	},
+	plugins: [
+		'react',
+		'react-hooks',
+		'@typescript-eslint',
+		'react-refresh',
+	],
+	extends: [
+		'eslint:recommended',
+		'plugin:react/recommended',
+		'plugin:@typescript-eslint/recommended',
+		'plugin:react-hooks/recommended',
+	],
+	rules: {
+		// Vite + new JSX transform
+		'react/react-in-jsx-scope': 'off',
+		// Helpful with HMR and component boundaries
+		'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+	},
+};
+
