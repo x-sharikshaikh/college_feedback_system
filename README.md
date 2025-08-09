@@ -159,7 +159,7 @@ npm run dev
 
 # Frontend dev (Vite) in another PowerShell
 cd ../frontend
-n# Ensure VITE_API_URL=http://localhost:4000 in frontend/.env so the app hits the running backend
+# Ensure VITE_API_URL=http://localhost:4000 in frontend/.env so the app hits the running backend
 npm run dev
 ```
 
